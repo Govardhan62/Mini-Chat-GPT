@@ -6,11 +6,6 @@ from django.views.decorators.csrf import csrf_exempt
 # Set up Gemini API Key
 genai.configure(api_key="AIzaSyBPvSVmsCfXkxzHqN6dBEGAw5GZ3Ag2ZIk")
 
-# List available models
-models = genai.list_models()
-for model in models:
-    print(model.name)  # Print model names
-
 # Initialize the Gemini model
 model = genai.GenerativeModel("gemini-1.5-pro-latest")
 
