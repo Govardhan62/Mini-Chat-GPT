@@ -1,14 +1,10 @@
 import google.generativeai as genai
 from django.shortcuts import render
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 # Set up Gemini API Key
 genai.configure(api_key="AIzaSyBPvSVmsCfXkxzHqN6dBEGAw5GZ3Ag2ZIk")
-
-# List available models
-models = genai.list_models()
-for model in models:
-    print(model.name)  # Print model names
 
 # Initialize the Gemini model
 model = genai.GenerativeModel("gemini-1.5-pro-latest")
@@ -22,6 +18,7 @@ def get_chat_history(request):
 def chatbot(request):
     return render(request, "chatbot.html")
 
+@csrf_exempt
 def ask_gemini(request):
     if request.method == "POST":
         try:
