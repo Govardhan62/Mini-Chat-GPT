@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini ChatGPT</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #ece9e6, #ffffff);
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .chat-container {
+            width: 90%;
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        .messages {
+            height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .message {
+            max-width: 75%;
+            padding: 12px 16px;
+            margin-bottom: 5px;
+            border-radius: 18px;
+            font-size: 16px;
+            word-wrap: break-word;
+            white-space: pre-line;
+        }
+        .user {
+            align-self: flex-end;
+            background: #0078ff;
+            color: white;
+            border-top-right-radius: 5px;
+        }
+        .bot {
+            align-self: flex-start;
+            background: #f1f1f1;
+            color: black;
+            border-top-left-radius: 5px;
+        }
+        .typing-indicator {
+            font-size: 14px;
+            color: #888;
+            margin-top: 5px;
+        }
+        .input-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+        }
+        input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            font-size: 16px;
+            outline: none;
+            transition: 0.3s;
+        }
+        input:focus {
+            border-color: #0078ff;
+            box-shadow: 0 0 5px rgba(0, 120, 255, 0.3);
+        }
+        button {
+            padding: 12px 20px;
+            background: #0078ff;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #005fcc;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h2>Mini ChatGPT</h2>
+    <div class="chat-container">
+        <div id="messages" class="messages"></div>
+        <div class="input-container">
+            <input type="text" id="messageInput" placeholder="Type a message..." />
+            <button id="sendMessage">Send</button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("sendMessage").onclick = sendMessage;
+        document.getElementById("messageInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") sendMessage();
+        });
+
+        function sendMessage() {
+            const userMessage = document.getElementById("messageInput").value.trim();
+            if (!userMessage) return;
+
+            appendMessage("user", userMessage);
+            document.getElementById("messageInput").value = "";
+
+            const messagesDiv = document.getElementById("messages");
+            const typingIndicator = document.createElement("p");
+            typingIndicator.classList.add("typing-indicator");
+            typingIndicator.innerText = "Bot is typing...";
+            messagesDiv.appendChild(typingIndicator);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            fetch("/ask_gemini/", {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-CSRFToken": getCSRFToken() 
+                },
+                body: "message=" + encodeURIComponent(userMessage)
+            })
+            .then(response => response.json())
+            .then(data => {
+                messagesDiv.removeChild(typingIndicator);
+                if (data.message) {
+                    displayFormattedResponse(data.message);
+                } else {
+                    appendMessage("bot", "Error: " + (data.error || "Unknown error"));
+                }
+            })
+            .catch(error => {
+                messagesDiv.removeChild(typingIndicator);
+                appendMessage("bot", "Request failed: " + error.message);
+            });
+        }
+
+        function appendMessage(sender, text, isHtml = false) {
+            const messagesDiv = document.getElementById("messages");
+            const messageElement = document.createElement("div");
+            messageElement.classList.add("message", sender);
+            
+            if (isHtml) {
+                messageElement.innerHTML = text;
+            } else {
+                messageElement.innerText = text;
+            }
+            
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function displayFormattedResponse(text) {
+            const steps = text.split("\n");
+            let index = 0;
+
+            function showNextStep() {
+                if (index < steps.length) {
+                    let formattedText = steps[index].trim();
+
+                    if (formattedText.match(/^\d+\./)) {  
+                        formattedText = `✅ ${formattedText}`;  
+                    }
+
+                    if (formattedText.startsWith("- ")) {  
+                        formattedText = `🔹 ${formattedText.slice(2)}`;  
+                    }
+
+                    if (formattedText.startsWith("```") && formattedText.endsWith("```")) {  
+                        formattedText = `<pre>${formattedText.slice(3, -3)}</pre>`;  
+                    }
+
+                    appendMessage("bot", formattedText, true);
+                    index++;
+                    setTimeout(showNextStep, 500);
+                }
+            }
+            showNextStep();
+        }
+
+        function getCSRFToken() {
+            const cookies = document.cookie.split("; ");
+            for (const cookie of cookies) {
+                const [name, value] = cookie.split("=");
+                if (name === "csrftoken") return value;
+            }
+            return "";
+        }
+    </script>
+</body>
+</html>
