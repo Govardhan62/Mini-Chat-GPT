@@ -132,10 +132,10 @@
             fetch("/ask_gemini/", {
                 method: "POST",
                 headers: { 
-                    "Content-Type": "application/json",
+                    "Content-Type": "application/x-www-form-urlencoded",
                     "X-CSRFToken": getCSRFToken() 
                 },
-                body: JSON.stringify({ message: userMessage })  // Send JSON instead of form data
+                body: "message=" + encodeURIComponent(userMessage)
             })
             .then(response => response.json())
             .then(data => {
@@ -176,15 +176,17 @@
                     let formattedText = steps[index].trim();
 
                     if (formattedText.match(/^\d+\./)) {  
-                        formattedText = `✅ ${formattedText}`;  
+                        formattedText = ✅ ${formattedText};  
                     }
 
                     if (formattedText.startsWith("- ")) {  
-                        formattedText = `🔹 ${formattedText.slice(2)}`;  
+                        formattedText = 🔹 ${formattedText.slice(2)};  
                     }
 
-                    if (formattedText.startsWith("```") && formattedText.endsWith("```")) {  
-                        formattedText = `<pre>${formattedText.slice(3, -3)}</pre>`;  
+                    if (formattedText.startsWith("
+") && formattedText.endsWith("
+")) {  
+                        formattedText = <pre>${formattedText.slice(3, -3)}</pre>;  
                     }
 
                     appendMessage("bot", formattedText, true);
