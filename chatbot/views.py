@@ -2,9 +2,12 @@ import google.generativeai as genai # type: ignore
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+import os
 
-# Set up Gemini API Key
-genai.configure(api_key="AIzaSyBPvSVmsCfXkxzHqN6dBEGAw5GZ3Ag2ZIk")
+# # Set up Gemini API Key
+# genai.configure(api_key="AIzaSyBPvSVmsCfXkxzHqN6dBEGAw5GZ3Ag2ZIk")
+
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 # Initialize the Gemini model
 model = genai.GenerativeModel("gemini-1.5-pro-latest")
