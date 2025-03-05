@@ -1,4 +1,4 @@
-import google.generativeai as genai
+import google.generativeai as genai # type: ignore
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
