@@ -24,23 +24,31 @@ def chatbot(request):
 
 def ask_gemini(request):
     if request.method == "POST":
-        user_message = request.POST.get("message", "").strip()
+        try:
+            # Decode JSON data from request
+            data = json.loads(request.body.decode("utf-8"))
+            user_message = data.get("message", "").strip()
 
-        if not user_message:
-            return JsonResponse({"message": "Please enter a message!"})
+            if not user_message:
+                return JsonResponse({"error": "Please enter a message!"}, status=400)
 
-        # Retrieve chat history
-        chat_history = get_chat_history(request)
-        chat_history.append(f"You: {user_message}")
+            # Retrieve chat history
+            chat_history = get_chat_history(request)
+            chat_history.append(f"You: {user_message}")
 
-        # Generate response
-        response = model.generate_content(user_message)
+            # Generate response from Gemini API
+            response = model.generate_content(user_message)
 
-        # Extract the text response
-        bot_message = response.text.strip() if response and response.text else "I couldn't understand that."
+            # Extract the response text
+            bot_message = response.text.strip() if response and response.text else "I couldn't understand that."
 
-        # Append bot response to history
-        chat_history.append(f"Bot: {bot_message}")
-        request.session["chat_history"] = chat_history  # Save session
+            # Append bot response to history
+            chat_history.append(f"Bot: {bot_message}")
+            request.session["chat_history"] = chat_history  # Save session
 
-        return JsonResponse({"message": bot_message})
+            return JsonResponse({"message": bot_message})  # Send JSON response
+
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON format"}, status=400)
+    else:
+        return JsonResponse({"error": "Invalid request method"}, status=405)
