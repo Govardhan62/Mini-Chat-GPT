@@ -21,7 +21,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-^o&m71aj+(0z0h9e(6v1adx6i^x*$qx+8-m*ogg7)q^onkks(e'
+
+#SECRET_KEY = 'django-insecure-^o&m71aj+(0z0h9e(6v1adx6i^x*$qx+8-m*ogg7)q^onkks(e'
+
+SECRET_KEY=os.environ.get("SECRET_KEY")
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
